@@ -1,0 +1,40 @@
+#Simple Query SQL
+SELECT * from [TestDB].[dbo].DORYgeneCHR dory;
+
+#Simple Query Neo4j
+MATCH (n:DORY) 
+WHERE n.Chromosome is not null
+RETURN n.name AS Name, n.Species as Species, n.Chromosome as Chromosome, n.CoordinateStart AS CoordinateStart, n.CoordinateEnd AS CoordinateEnd 
+
+#Simple Query Neo4j (graph)
+MATCH (n:DORY) 
+WHERE n.Chromosome is not null
+RETURN n
+
+#Complex Query SQL
+SELECT distinct 
+genes.EupGENE, dory.Chromosome, dory.CoordinateStart, dory.CoordinateEnd, eup.Gene as EuprymnaOrtholog 
+
+FROM [Indices].[dbo].DORYgeneCHR dory 
+left join [Indices].dbo.dory_eup_orth_genes genes 
+	on dory.GeneID = genes.IdentCode
+left join [Indices].dbo.EUPgeneCHR eup   
+	on eup.GeneID = genes.IdentCode
+
+where dory.Chromosome != 'Dpe11' 
+	and eup.Chromosome = 'Lachesis_group5' 
+order by dory.CoordinateStart;
+
+
+#Complex Query Neo4j
+MATCH (DoryGene)-[:orthologous]-(EupGene)-[:is_on]-(EupChr)-[:homologous]-(DoryChr) 
+WHERE (EupChr.name="Lachesis_group5") AND (DoryChr.name="Dpe11") 
+AND NOT (DoryGene)-[:is_on]-(DoryChr)-[:homologous]-(EupChr) 
+RETURN DoryGene.name AS DoryteuthisGene, DoryGene.Chromosome AS Chromosome, DoryGene.CoordinateStart AS CoordinateStart, DoryGene.CoordinateEnd AS CoordinateEnd, EupGene.name AS EuprymnaOrtholog 
+ORDER BY Chromosome, CoordinateStart;
+
+#Complex Query Neo4j (Graph)
+MATCH (DoryGene)-[:orthologous]-(EupGene)-[:is_on]-(EupChr)-[:homologous]-(DoryChr) 
+WHERE (EupChr.name="Lachesis_group5") AND (DoryChr.name="Dpe11") 
+AND NOT (DoryGene)-[:is_on]-(DoryChr)-[:homologous]-(EupChr) 
+RETURN (DoryGene)-[:orthologous]-(EupGene)-[:is_on]-(EupChr)-[:homologous]-(DoryChr)
